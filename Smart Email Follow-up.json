@@ -1,0 +1,1056 @@
+{
+  "name": "Smart Email Follow-up",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 2
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -1920,
+        -48
+      ],
+      "id": "4d2f117c-6b24-4b31-a909-5197302e114f",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "https://docs.google.com/spreadsheets/d/1FxLoIemcvMf87S9ig49Kbp4rmxGyOLSlWHRyAxTSXSo/edit?gid=0#gid=0",
+          "mode": "url"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1FxLoIemcvMf87S9ig49Kbp4rmxGyOLSlWHRyAxTSXSo/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -1696,
+        -48
+      ],
+      "id": "9c8a4564-984b-46bf-b997-e0029f131bfc",
+      "name": "Get row(s) in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "FjynR6GLStIZYopA",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $('Get row(s) in sheet').item.json.Status }}",
+                    "rightValue": "Pending",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "b8e8d530-cf75-4a73-886a-8ac7832d1111"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "send first email"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "ce08360e-7b0b-4c80-99b7-61aa9c0ad62a",
+                    "leftValue": "={{ $('Get row(s) in sheet').item.json.Status }}",
+                    "rightValue": "Sent",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "follow up mail"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "4005bebf-acd0-46a8-94a8-1bdea98f47a0",
+                    "leftValue": "={{ $('Get row(s) in sheet').item.json.Status }}",
+                    "rightValue": "follow up",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "second follow up mail"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        -224,
+        -64
+      ],
+      "id": "01dcee69-4767-42da-9bb7-e3dc60cca06b",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "https://docs.google.com/spreadsheets/d/1FxLoIemcvMf87S9ig49Kbp4rmxGyOLSlWHRyAxTSXSo/edit?gid=0#gid=0",
+          "mode": "url"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1FxLoIemcvMf87S9ig49Kbp4rmxGyOLSlWHRyAxTSXSo/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "SNo": "={{ $('Switch1').item.json.SNo }}",
+            "Status": "Sent",
+            "Sending time": "={{$now}}"
+          },
+          "matchingColumns": [
+            "SNo"
+          ],
+          "schema": [
+            {
+              "id": "SNo",
+              "displayName": "SNo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Name",
+              "displayName": "Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Reply",
+              "displayName": "Reply",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Sending time",
+              "displayName": "Sending time",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Service",
+              "displayName": "Service",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        224,
+        -240
+      ],
+      "id": "39aa7332-bafc-40dd-878a-e0f80d336614",
+      "name": "update status to sent",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "FjynR6GLStIZYopA",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "https://docs.google.com/spreadsheets/d/1FxLoIemcvMf87S9ig49Kbp4rmxGyOLSlWHRyAxTSXSo/edit?gid=0#gid=0",
+          "mode": "url"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1FxLoIemcvMf87S9ig49Kbp4rmxGyOLSlWHRyAxTSXSo/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "SNo": "={{ $('Switch1').item.json.SNo }}",
+            "Status": "follow up",
+            "Sending time": "={{ $now }}"
+          },
+          "matchingColumns": [
+            "SNo"
+          ],
+          "schema": [
+            {
+              "id": "SNo",
+              "displayName": "SNo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Name",
+              "displayName": "Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Reply",
+              "displayName": "Reply",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Sending time",
+              "displayName": "Sending time",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Service",
+              "displayName": "Service",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        224,
+        -48
+      ],
+      "id": "580b2f56-2bf6-4cbf-833f-676a914718da",
+      "name": "update status to follow up",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "FjynR6GLStIZYopA",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "https://docs.google.com/spreadsheets/d/1FxLoIemcvMf87S9ig49Kbp4rmxGyOLSlWHRyAxTSXSo/edit?gid=0#gid=0",
+          "mode": "url"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1FxLoIemcvMf87S9ig49Kbp4rmxGyOLSlWHRyAxTSXSo/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "SNo": "={{ $('Switch1').item.json.SNo }}",
+            "Status": "Second follow up ",
+            "Sending time": "={{$now}}"
+          },
+          "matchingColumns": [
+            "SNo"
+          ],
+          "schema": [
+            {
+              "id": "SNo",
+              "displayName": "SNo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Name",
+              "displayName": "Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Reply",
+              "displayName": "Reply",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Sending time",
+              "displayName": "Sending time",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Service",
+              "displayName": "Service",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        224,
+        144
+      ],
+      "id": "553a4d54-9316-465c-870c-fc6fc2867349",
+      "name": "update status to second follow up",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "FjynR6GLStIZYopA",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.Status }}",
+                    "rightValue": "Pending",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "accde078-3457-4397-bd91-158a3bf725af"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "send email"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "97e7045e-1e35-4578-9fe1-e880baed0940",
+                    "leftValue": "={{ $json.Status }}",
+                    "rightValue": "Sent",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "send first follow up"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "11829357-ce29-4b5b-aa41-d8ff54fc4e51",
+                    "leftValue": "={{ $json.Status }}",
+                    "rightValue": "follow up",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "send second follow up"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        -1472,
+        -64
+      ],
+      "id": "1ad37b40-29a1-44f6-8ab0-5f011cd849d6",
+      "name": "Switch1"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "6ceb2c35-286c-43a1-bbcd-4b3909c5f3a7",
+              "name": "message",
+              "value": "=write a email regrading  {{ $json.Service }} exprience",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1024,
+        -240
+      ],
+      "id": "0d49015c-face-4a20-afe8-4d91be63bfeb",
+      "name": "email prompt"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "4093f5c7-92e8-4fcb-9cfc-de07439f32f3",
+              "name": "message",
+              "value": "=write a follow up email regrading  {{ $json.Service }} exprience ",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1024,
+        -48
+      ],
+      "id": "dfc39413-0806-4ccd-b701-796444ca0d02",
+      "name": "first follow up prompt"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "9ea10825-5e51-483f-b469-01f9cb98d628",
+              "name": "message",
+              "value": "=write second follow up mail regrading  {{ $json.Service }} service exprience",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1024,
+        144
+      ],
+      "id": "61832b28-c56b-4cf7-9580-6e9e5f83c198",
+      "name": "second follow up prompt"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "mistral:latest",
+          "mode": "list",
+          "cachedResultName": "mistral:latest"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "={{ $json.message }}"
+            }
+          ]
+        },
+        "options": {
+          "system": "=Write a short and polite email.\n\nCustomer name: {{ $json.Name }}\nService: {{ $json.Service }}\n\nRules:\n- Keep it short\n- Be professional\n- No extra text\n\nFormat EXACTLY like this:\n\n{\n\nSubject: <write subject here>\n\nBody:\n<html>\n<p>Hi {{ $json.Name }},</p>\n<p>...</p>\n</html>\n\n}",
+          "format": "json"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.ollama",
+      "typeVersion": 1,
+      "position": [
+        -800,
+        -48
+      ],
+      "id": "4cc264bc-77e4-4c2c-b7bd-cdcd77cc7564",
+      "name": "Message a model",
+      "credentials": {
+        "ollamaApi": {
+          "id": "hZbNQS2vgKVAylV9",
+          "name": "Ollama account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const text = $input.first().json.content;\n\nconst subjectMatch = text.match(/Subject:(.*)/);\nconst bodyMatch = text.split(\"Body:\")[1];\n\nreturn [{\n  subject: subjectMatch ? subjectMatch[1].trim() : \"\",\n  body: bodyMatch ? bodyMatch.trim() : \"\"\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -448,
+        -48
+      ],
+      "id": "814feaf4-3715-4fb4-8896-ef39193e393a",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "3998f865-9cdc-4e2c-a407-ed89144f74bf",
+              "leftValue": "={{ (Date.now() - new Date($json[\"Sending time\"])) > 172800000 }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "e22268b7-8978-4333-8568-fa91dc6a128d",
+              "leftValue": "={{ $json.Reply }}",
+              "rightValue": "not",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -1248,
+        -48
+      ],
+      "id": "49cbd5e3-380d-48d0-8b5b-a6073a3df60c",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "fa73bcd8-def6-4241-935c-37f3eeb54405",
+              "leftValue": "={{ (Date.now() - new Date($json[\"Sending time\"])) > 172800000 }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "131774d7-febc-4ba5-b797-05e5fef4a968",
+              "leftValue": "={{ $json.Reply }}",
+              "rightValue": "not",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -1248,
+        144
+      ],
+      "id": "b59643c7-8b0b-4d91-b538-65c3c4523062",
+      "name": "If1"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('email prompt').item.json.Email }}",
+        "subject": "={{ $json.subject }}",
+        "message": "={{ $json.body }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        0,
+        -240
+      ],
+      "id": "6396c33d-b800-4048-a259-00efa5e32eca",
+      "name": "Send a message",
+      "webhookId": "4d7bed79-2a0c-46a5-a489-b35cd49f807a",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "PUBuYCAX1pjouOyh",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('first follow up prompt').item.json.Email }}",
+        "subject": "={{ $json.subject }}",
+        "message": "={{ $json.body }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        0,
+        -48
+      ],
+      "id": "03b745c5-7891-40c9-9c26-f70aa5fdba22",
+      "name": "Send a message1",
+      "webhookId": "23f93206-a271-40c7-8fde-fdba937920c5",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "PUBuYCAX1pjouOyh",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('second follow up prompt').item.json.Email }}",
+        "subject": "={{ $json.subject }}",
+        "message": "={{ $json.body }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        0,
+        144
+      ],
+      "id": "200d9e11-852a-428e-8183-c546e20c5062",
+      "name": "Send a message2",
+      "webhookId": "7558172c-7a01-42c7-a7c3-7cc7c1c58d18",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "PUBuYCAX1pjouOyh",
+          "name": "Gmail account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet": {
+      "main": [
+        [
+          {
+            "node": "Switch1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send a message1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send a message2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch1": {
+      "main": [
+        [
+          {
+            "node": "email prompt",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "If1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "email prompt": {
+      "main": [
+        [
+          {
+            "node": "Message a model",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "first follow up prompt": {
+      "main": [
+        [
+          {
+            "node": "Message a model",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "second follow up prompt": {
+      "main": [
+        [
+          {
+            "node": "Message a model",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "first follow up prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If1": {
+      "main": [
+        [
+          {
+            "node": "second follow up prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message": {
+      "main": [
+        [
+          {
+            "node": "update status to sent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message1": {
+      "main": [
+        [
+          {
+            "node": "update status to follow up",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message2": {
+      "main": [
+        [
+          {
+            "node": "update status to second follow up",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "timeSavedMode": "fixed",
+    "timezone": "Asia/Kolkata",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "versionId": "2da3531d-6212-4a85-9a0e-d3d678fb48a4",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "85a535a9c32b7114a9ecf4cfa706985f8d0b603d6bd49873023ade529369b818"
+  },
+  "id": "9W3biAm0mxZBOokb",
+  "tags": [
+    {
+      "updatedAt": "2026-03-24T07:16:45.656Z",
+      "createdAt": "2026-03-24T07:16:45.656Z",
+      "id": "EgzGquS6wg7l2Q8Z",
+      "name": "email automation"
+    },
+    {
+      "updatedAt": "2026-03-24T07:16:24.870Z",
+      "createdAt": "2026-03-24T07:16:24.870Z",
+      "id": "y856iMV4K2hCr2pl",
+      "name": "project"
+    }
+  ]
+}
