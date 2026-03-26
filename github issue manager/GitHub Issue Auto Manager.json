@@ -1,0 +1,700 @@
+{
+  "name": "GitHub Issue Auto Manager",
+  "nodes": [
+    {
+      "parameters": {
+        "owner": {
+          "__rl": true,
+          "value": "https://github.com/Amit-Pancholi",
+          "mode": "url"
+        },
+        "repository": {
+          "__rl": true,
+          "value": "n8n-project",
+          "mode": "list",
+          "cachedResultName": "n8n-project",
+          "cachedResultUrl": "https://github.com/Amit-Pancholi/n8n-project"
+        },
+        "events": [
+          "issues"
+        ],
+        "options": {}
+      },
+      "type": "n8n-nodes-base.githubTrigger",
+      "typeVersion": 1,
+      "position": [
+        -704,
+        -240
+      ],
+      "id": "e8ab16f1-ee61-4dca-bd1a-eca630d7e683",
+      "name": "Github Trigger",
+      "webhookId": "36212370-d5f9-4167-a865-cc86790f3e03",
+      "credentials": {
+        "githubApi": {
+          "id": "LnN65Yl0KZlXub5y",
+          "name": "GitHub account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "8e7c234b-5b58-421d-8852-688101f13488",
+              "leftValue": "={{ $json.body.issue.state }}",
+              "rightValue": "open",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -480,
+        -240
+      ],
+      "id": "c97dd6ce-ed5a-43d1-a84f-d4a804599239",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.body.issue.labels.length > 0 }}",
+                    "rightValue": "bug",
+                    "operator": {
+                      "type": "boolean",
+                      "operation": "true",
+                      "singleValue": true
+                    },
+                    "id": "45ded2a1-8203-4112-8012-e0afef2a6a04"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "labeled"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "6b12705c-f0c2-4563-afe2-5bdf341967e8",
+                    "leftValue": "={{ $json.body.issue.labels.length == 0 }}",
+                    "rightValue": "",
+                    "operator": {
+                      "type": "boolean",
+                      "operation": "true",
+                      "singleValue": true
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "No label "
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        -256,
+        -240
+      ],
+      "id": "46af47e7-d745-4220-9920-c91e633c87fd",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "jsCode": "const labels = $input.first().json.body.issue.labels\nlet assignee = \"amit-pancholi\"; // default\n\nif (labels.length > 0) {\n  const label = labels[0].name;\n  \n  if (label === \"bug\") assignee = \"amit-pancholi\";\n  else if (label === \"enhancement\") assignee = \"frontend-dev\";\n}\n\nreturn [{ assignee }];;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        768,
+        -336
+      ],
+      "id": "a3b7fe20-369c-4e1c-b5d1-eef7b081527b",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "mistral:latest",
+          "mode": "list",
+          "cachedResultName": "mistral:latest"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=you will help me to understand what type of issue is this which title : {{ $json.body.issue.title }}\nbody :{{ $json.body.issue.body }}"
+            }
+          ]
+        },
+        "options": {
+          "system": "you are a issue manager you will will analysis github issue then give me it is a bug or enhancement\n\nyou will give me only one output in json format\nbug or enhancement\n\nonly give one word in lowercase and trim space"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.ollama",
+      "typeVersion": 1,
+      "position": [
+        -32,
+        -144
+      ],
+      "id": "79eee786-0f01-4893-ac91-b8f68e70e35d",
+      "name": "Message a model",
+      "credentials": {
+        "ollamaApi": {
+          "id": "hZbNQS2vgKVAylV9",
+          "name": "Ollama account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "let label = $input.first().json.content.trim();\n let assignee = \"amit-pancholi\"\n  if (label === \"bug\") assignee = \"amit-pancholi\";\n  else if (label === \"enhancement\") assignee = \"amit-pancholi\";\nreturn {assignee}"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        544,
+        -144
+      ],
+      "id": "80227de8-0d09-4464-8fc0-7040fd00ee54",
+      "name": "Code in JavaScript1"
+    },
+    {
+      "parameters": {
+        "chatId": "5243399167",
+        "text": "={{ $json.content }}",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1568,
+        -240
+      ],
+      "id": "a9d9dd04-0312-49fb-8f4c-74724c03cf2c",
+      "name": "Send a text message",
+      "webhookId": "93f52c70-e85e-4fe9-8164-5cea838b96d6",
+      "credentials": {
+        "telegramApi": {
+          "id": "cVxfRkwoNRwL8Wdu",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "mistral:latest",
+          "mode": "list",
+          "cachedResultName": "mistral:latest"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=you will write a short message that will help to understand github issue \n{{ $json.title }}\n{{ $json.body }}"
+            }
+          ]
+        },
+        "options": {
+          "system": "you will help me to send a message to a developer that we will assaine github issue \noutput format\nissue/feature : you will need to add a page\n\nmake it simple and short under 2-3 line"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.ollama",
+      "typeVersion": 1,
+      "position": [
+        1216,
+        -240
+      ],
+      "id": "30e2ff9d-751e-41bc-8d87-209769f3f0d2",
+      "name": "Message a model1",
+      "credentials": {
+        "ollamaApi": {
+          "id": "hZbNQS2vgKVAylV9",
+          "name": "Ollama account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "edit",
+        "owner": {
+          "__rl": true,
+          "value": "https://github.com/Amit-Pancholi",
+          "mode": "url"
+        },
+        "repository": {
+          "__rl": true,
+          "value": "n8n-project",
+          "mode": "list",
+          "cachedResultName": "n8n-project",
+          "cachedResultUrl": "https://github.com/Amit-Pancholi/n8n-project"
+        },
+        "issueNumber": "={{ $('Switch').item.json.body.issue.number }}",
+        "editFields": {
+          "assignees": [
+            {
+              "assignee": "={{ $json.assignee }}"
+            },
+            {}
+          ],
+          "labels": []
+        }
+      },
+      "type": "n8n-nodes-base.github",
+      "typeVersion": 1.1,
+      "position": [
+        992,
+        -240
+      ],
+      "id": "4c484405-73af-4226-abac-bbe082616e90",
+      "name": "Edit an issue",
+      "webhookId": "fc2ebee0-7da9-42cc-b848-7b1f66db3282",
+      "credentials": {
+        "githubApi": {
+          "id": "LnN65Yl0KZlXub5y",
+          "name": "GitHub account"
+        }
+      }
+    }
+  ],
+  "pinData": {
+    "Github Trigger": [
+      {
+        "json": {
+          "body": {
+            "action": "reopened",
+            "issue": {
+              "url": "https://api.github.com/repos/Amit-Pancholi/n8n-project/issues/4",
+              "repository_url": "https://api.github.com/repos/Amit-Pancholi/n8n-project",
+              "labels_url": "https://api.github.com/repos/Amit-Pancholi/n8n-project/issues/4/labels{/name}",
+              "comments_url": "https://api.github.com/repos/Amit-Pancholi/n8n-project/issues/4/comments",
+              "events_url": "https://api.github.com/repos/Amit-Pancholi/n8n-project/issues/4/events",
+              "html_url": "https://github.com/Amit-Pancholi/n8n-project/issues/4",
+              "id": 4142970429,
+              "node_id": "I_kwDORxKpCM728LY9",
+              "number": 4,
+              "title": "Bug: Login API returns 500 error on invalid credentials",
+              "user": {
+                "login": "Amit-Pancholi",
+                "id": 129113125,
+                "node_id": "U_kgDOB7IcJQ",
+                "avatar_url": "https://avatars.githubusercontent.com/u/129113125?v=4",
+                "gravatar_id": "",
+                "url": "https://api.github.com/users/Amit-Pancholi",
+                "html_url": "https://github.com/Amit-Pancholi",
+                "followers_url": "https://api.github.com/users/Amit-Pancholi/followers",
+                "following_url": "https://api.github.com/users/Amit-Pancholi/following{/other_user}",
+                "gists_url": "https://api.github.com/users/Amit-Pancholi/gists{/gist_id}",
+                "starred_url": "https://api.github.com/users/Amit-Pancholi/starred{/owner}{/repo}",
+                "subscriptions_url": "https://api.github.com/users/Amit-Pancholi/subscriptions",
+                "organizations_url": "https://api.github.com/users/Amit-Pancholi/orgs",
+                "repos_url": "https://api.github.com/users/Amit-Pancholi/repos",
+                "events_url": "https://api.github.com/users/Amit-Pancholi/events{/privacy}",
+                "received_events_url": "https://api.github.com/users/Amit-Pancholi/received_events",
+                "type": "User",
+                "user_view_type": "public",
+                "site_admin": false
+              },
+              "labels": [],
+              "state": "open",
+              "locked": false,
+              "assignees": [
+                {
+                  "login": "Amit-Pancholi",
+                  "id": 129113125,
+                  "node_id": "U_kgDOB7IcJQ",
+                  "avatar_url": "https://avatars.githubusercontent.com/u/129113125?v=4",
+                  "gravatar_id": "",
+                  "url": "https://api.github.com/users/Amit-Pancholi",
+                  "html_url": "https://github.com/Amit-Pancholi",
+                  "followers_url": "https://api.github.com/users/Amit-Pancholi/followers",
+                  "following_url": "https://api.github.com/users/Amit-Pancholi/following{/other_user}",
+                  "gists_url": "https://api.github.com/users/Amit-Pancholi/gists{/gist_id}",
+                  "starred_url": "https://api.github.com/users/Amit-Pancholi/starred{/owner}{/repo}",
+                  "subscriptions_url": "https://api.github.com/users/Amit-Pancholi/subscriptions",
+                  "organizations_url": "https://api.github.com/users/Amit-Pancholi/orgs",
+                  "repos_url": "https://api.github.com/users/Amit-Pancholi/repos",
+                  "events_url": "https://api.github.com/users/Amit-Pancholi/events{/privacy}",
+                  "received_events_url": "https://api.github.com/users/Amit-Pancholi/received_events",
+                  "type": "User",
+                  "user_view_type": "public",
+                  "site_admin": false
+                }
+              ],
+              "milestone": null,
+              "comments": 0,
+              "created_at": "2026-03-26T11:26:48Z",
+              "updated_at": "2026-03-26T12:14:17Z",
+              "closed_at": null,
+              "assignee": {
+                "login": "Amit-Pancholi",
+                "id": 129113125,
+                "node_id": "U_kgDOB7IcJQ",
+                "avatar_url": "https://avatars.githubusercontent.com/u/129113125?v=4",
+                "gravatar_id": "",
+                "url": "https://api.github.com/users/Amit-Pancholi",
+                "html_url": "https://github.com/Amit-Pancholi",
+                "followers_url": "https://api.github.com/users/Amit-Pancholi/followers",
+                "following_url": "https://api.github.com/users/Amit-Pancholi/following{/other_user}",
+                "gists_url": "https://api.github.com/users/Amit-Pancholi/gists{/gist_id}",
+                "starred_url": "https://api.github.com/users/Amit-Pancholi/starred{/owner}{/repo}",
+                "subscriptions_url": "https://api.github.com/users/Amit-Pancholi/subscriptions",
+                "organizations_url": "https://api.github.com/users/Amit-Pancholi/orgs",
+                "repos_url": "https://api.github.com/users/Amit-Pancholi/repos",
+                "events_url": "https://api.github.com/users/Amit-Pancholi/events{/privacy}",
+                "received_events_url": "https://api.github.com/users/Amit-Pancholi/received_events",
+                "type": "User",
+                "user_view_type": "public",
+                "site_admin": false
+              },
+              "author_association": "OWNER",
+              "active_lock_reason": null,
+              "sub_issues_summary": {
+                "total": 0,
+                "completed": 0,
+                "percent_completed": 0
+              },
+              "issue_dependencies_summary": {
+                "blocked_by": 0,
+                "total_blocked_by": 0,
+                "blocking": 0,
+                "total_blocking": 0
+              },
+              "body": "### Description\nWhen I try to login with invalid credentials, the API returns a 500 error instead of 401.\n\n### Steps to Reproduce\n1. Go to /login\n2. Enter wrong email/password\n3. Click login\n\n### Expected Behavior\nShould return 401 Unauthorized with proper error message.\n\n### Actual Behavior\nReturns 500 Internal Server Error.\n\n### Environment\n- OS: Windows\n- Browser: Chrome",
+              "reactions": {
+                "url": "https://api.github.com/repos/Amit-Pancholi/n8n-project/issues/4/reactions",
+                "total_count": 0,
+                "+1": 0,
+                "-1": 0,
+                "laugh": 0,
+                "hooray": 0,
+                "confused": 0,
+                "heart": 0,
+                "rocket": 0,
+                "eyes": 0
+              },
+              "timeline_url": "https://api.github.com/repos/Amit-Pancholi/n8n-project/issues/4/timeline",
+              "performed_via_github_app": null,
+              "state_reason": "reopened",
+              "pinned_comment": null
+            },
+            "repository": {
+              "id": 1192405256,
+              "node_id": "R_kgDORxKpCA",
+              "name": "n8n-project",
+              "full_name": "Amit-Pancholi/n8n-project",
+              "private": false,
+              "owner": {
+                "login": "Amit-Pancholi",
+                "id": 129113125,
+                "node_id": "U_kgDOB7IcJQ",
+                "avatar_url": "https://avatars.githubusercontent.com/u/129113125?v=4",
+                "gravatar_id": "",
+                "url": "https://api.github.com/users/Amit-Pancholi",
+                "html_url": "https://github.com/Amit-Pancholi",
+                "followers_url": "https://api.github.com/users/Amit-Pancholi/followers",
+                "following_url": "https://api.github.com/users/Amit-Pancholi/following{/other_user}",
+                "gists_url": "https://api.github.com/users/Amit-Pancholi/gists{/gist_id}",
+                "starred_url": "https://api.github.com/users/Amit-Pancholi/starred{/owner}{/repo}",
+                "subscriptions_url": "https://api.github.com/users/Amit-Pancholi/subscriptions",
+                "organizations_url": "https://api.github.com/users/Amit-Pancholi/orgs",
+                "repos_url": "https://api.github.com/users/Amit-Pancholi/repos",
+                "events_url": "https://api.github.com/users/Amit-Pancholi/events{/privacy}",
+                "received_events_url": "https://api.github.com/users/Amit-Pancholi/received_events",
+                "type": "User",
+                "user_view_type": "public",
+                "site_admin": false
+              },
+              "html_url": "https://github.com/Amit-Pancholi/n8n-project",
+              "description": "in this repository i will create some use full  n8n workflow that will use in daily life. ",
+              "fork": false,
+              "url": "https://api.github.com/repos/Amit-Pancholi/n8n-project",
+              "forks_url": "https://api.github.com/repos/Amit-Pancholi/n8n-project/forks",
+              "keys_url": "https://api.github.com/repos/Amit-Pancholi/n8n-project/keys{/key_id}",
+              "collaborators_url": "https://api.github.com/repos/Amit-Pancholi/n8n-project/collaborators{/collaborator}",
+              "teams_url": "https://api.github.com/repos/Amit-Pancholi/n8n-project/teams",
+              "hooks_url": "https://api.github.com/repos/Amit-Pancholi/n8n-project/hooks",
+              "issue_events_url": "https://api.github.com/repos/Amit-Pancholi/n8n-project/issues/events{/number}",
+              "events_url": "https://api.github.com/repos/Amit-Pancholi/n8n-project/events",
+              "assignees_url": "https://api.github.com/repos/Amit-Pancholi/n8n-project/assignees{/user}",
+              "branches_url": "https://api.github.com/repos/Amit-Pancholi/n8n-project/branches{/branch}",
+              "tags_url": "https://api.github.com/repos/Amit-Pancholi/n8n-project/tags",
+              "blobs_url": "https://api.github.com/repos/Amit-Pancholi/n8n-project/git/blobs{/sha}",
+              "git_tags_url": "https://api.github.com/repos/Amit-Pancholi/n8n-project/git/tags{/sha}",
+              "git_refs_url": "https://api.github.com/repos/Amit-Pancholi/n8n-project/git/refs{/sha}",
+              "trees_url": "https://api.github.com/repos/Amit-Pancholi/n8n-project/git/trees{/sha}",
+              "statuses_url": "https://api.github.com/repos/Amit-Pancholi/n8n-project/statuses/{sha}",
+              "languages_url": "https://api.github.com/repos/Amit-Pancholi/n8n-project/languages",
+              "stargazers_url": "https://api.github.com/repos/Amit-Pancholi/n8n-project/stargazers",
+              "contributors_url": "https://api.github.com/repos/Amit-Pancholi/n8n-project/contributors",
+              "subscribers_url": "https://api.github.com/repos/Amit-Pancholi/n8n-project/subscribers",
+              "subscription_url": "https://api.github.com/repos/Amit-Pancholi/n8n-project/subscription",
+              "commits_url": "https://api.github.com/repos/Amit-Pancholi/n8n-project/commits{/sha}",
+              "git_commits_url": "https://api.github.com/repos/Amit-Pancholi/n8n-project/git/commits{/sha}",
+              "comments_url": "https://api.github.com/repos/Amit-Pancholi/n8n-project/comments{/number}",
+              "issue_comment_url": "https://api.github.com/repos/Amit-Pancholi/n8n-project/issues/comments{/number}",
+              "contents_url": "https://api.github.com/repos/Amit-Pancholi/n8n-project/contents/{+path}",
+              "compare_url": "https://api.github.com/repos/Amit-Pancholi/n8n-project/compare/{base}...{head}",
+              "merges_url": "https://api.github.com/repos/Amit-Pancholi/n8n-project/merges",
+              "archive_url": "https://api.github.com/repos/Amit-Pancholi/n8n-project/{archive_format}{/ref}",
+              "downloads_url": "https://api.github.com/repos/Amit-Pancholi/n8n-project/downloads",
+              "issues_url": "https://api.github.com/repos/Amit-Pancholi/n8n-project/issues{/number}",
+              "pulls_url": "https://api.github.com/repos/Amit-Pancholi/n8n-project/pulls{/number}",
+              "milestones_url": "https://api.github.com/repos/Amit-Pancholi/n8n-project/milestones{/number}",
+              "notifications_url": "https://api.github.com/repos/Amit-Pancholi/n8n-project/notifications{?since,all,participating}",
+              "labels_url": "https://api.github.com/repos/Amit-Pancholi/n8n-project/labels{/name}",
+              "releases_url": "https://api.github.com/repos/Amit-Pancholi/n8n-project/releases{/id}",
+              "deployments_url": "https://api.github.com/repos/Amit-Pancholi/n8n-project/deployments",
+              "created_at": "2026-03-26T07:21:15Z",
+              "updated_at": "2026-03-26T07:53:47Z",
+              "pushed_at": "2026-03-26T07:53:44Z",
+              "git_url": "git://github.com/Amit-Pancholi/n8n-project.git",
+              "ssh_url": "git@github.com:Amit-Pancholi/n8n-project.git",
+              "clone_url": "https://github.com/Amit-Pancholi/n8n-project.git",
+              "svn_url": "https://github.com/Amit-Pancholi/n8n-project",
+              "homepage": null,
+              "size": 5,
+              "stargazers_count": 0,
+              "watchers_count": 0,
+              "language": null,
+              "has_issues": true,
+              "has_projects": true,
+              "has_downloads": true,
+              "has_wiki": true,
+              "has_pages": false,
+              "has_discussions": false,
+              "forks_count": 0,
+              "mirror_url": null,
+              "archived": false,
+              "disabled": false,
+              "open_issues_count": 3,
+              "license": {
+                "key": "mit",
+                "name": "MIT License",
+                "spdx_id": "MIT",
+                "url": "https://api.github.com/licenses/mit",
+                "node_id": "MDc6TGljZW5zZTEz"
+              },
+              "allow_forking": true,
+              "is_template": false,
+              "web_commit_signoff_required": false,
+              "has_pull_requests": true,
+              "pull_request_creation_policy": "all",
+              "topics": [],
+              "visibility": "public",
+              "forks": 0,
+              "open_issues": 3,
+              "watchers": 0,
+              "default_branch": "master"
+            },
+            "sender": {
+              "login": "Amit-Pancholi",
+              "id": 129113125,
+              "node_id": "U_kgDOB7IcJQ",
+              "avatar_url": "https://avatars.githubusercontent.com/u/129113125?v=4",
+              "gravatar_id": "",
+              "url": "https://api.github.com/users/Amit-Pancholi",
+              "html_url": "https://github.com/Amit-Pancholi",
+              "followers_url": "https://api.github.com/users/Amit-Pancholi/followers",
+              "following_url": "https://api.github.com/users/Amit-Pancholi/following{/other_user}",
+              "gists_url": "https://api.github.com/users/Amit-Pancholi/gists{/gist_id}",
+              "starred_url": "https://api.github.com/users/Amit-Pancholi/starred{/owner}{/repo}",
+              "subscriptions_url": "https://api.github.com/users/Amit-Pancholi/subscriptions",
+              "organizations_url": "https://api.github.com/users/Amit-Pancholi/orgs",
+              "repos_url": "https://api.github.com/users/Amit-Pancholi/repos",
+              "events_url": "https://api.github.com/users/Amit-Pancholi/events{/privacy}",
+              "received_events_url": "https://api.github.com/users/Amit-Pancholi/received_events",
+              "type": "User",
+              "user_view_type": "public",
+              "site_admin": false
+            }
+          },
+          "headers": {
+            "host": "unretrieved-candace-nonchaotically.ngrok-free.dev",
+            "user-agent": "GitHub-Hookshot/b951dd4",
+            "content-length": "11301",
+            "accept": "*/*",
+            "content-type": "application/json",
+            "x-forwarded-for": "140.82.115.82",
+            "x-forwarded-host": "unretrieved-candace-nonchaotically.ngrok-free.dev",
+            "x-forwarded-proto": "https",
+            "x-github-delivery": "4fa2f7b0-290d-11f1-9bf6-6b5bbf636492",
+            "x-github-event": "issues",
+            "x-github-hook-id": "602839314",
+            "x-github-hook-installation-target-id": "1192405256",
+            "x-github-hook-installation-target-type": "repository",
+            "x-hub-signature": "sha1=986ad84f374e0b7b441d5ce21798524e2174710d",
+            "x-hub-signature-256": "sha256=c5074bc1a491ee779fcac4486d4b350c0bf44642b96803178742a350568496db",
+            "accept-encoding": "gzip"
+          },
+          "query": {}
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Github Trigger": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Message a model",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Edit an issue",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript1": {
+      "main": [
+        [
+          {
+            "node": "Edit an issue",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model1": {
+      "main": [
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit an issue": {
+      "main": [
+        [
+          {
+            "node": "Message a model1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "bae7c252-8830-4d50-992f-6be4338e6b2f",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "85a535a9c32b7114a9ecf4cfa706985f8d0b603d6bd49873023ade529369b818"
+  },
+  "id": "a2x5CPzr8WfUbPbu",
+  "tags": [
+    {
+      "updatedAt": "2026-03-26T06:55:19.775Z",
+      "createdAt": "2026-03-26T06:55:19.775Z",
+      "id": "J9N6zhqTv8jyrLQ7",
+      "name": "Github"
+    },
+    {
+      "updatedAt": "2026-03-24T07:16:24.870Z",
+      "createdAt": "2026-03-24T07:16:24.870Z",
+      "id": "y856iMV4K2hCr2pl",
+      "name": "project"
+    }
+  ]
+}

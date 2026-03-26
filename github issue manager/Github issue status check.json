@@ -1,0 +1,411 @@
+{
+  "name": "Github issue status check",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 3
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -464,
+        -368
+      ],
+      "id": "e19f0c7a-4c3a-4906-80d3-d8eecea6b5d3",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "resource": "repository",
+        "owner": {
+          "__rl": true,
+          "value": "https://github.com/Amit-Pancholi",
+          "mode": "url"
+        },
+        "repository": {
+          "__rl": true,
+          "value": "n8n-project",
+          "mode": "list",
+          "cachedResultName": "n8n-project",
+          "cachedResultUrl": "https://github.com/Amit-Pancholi/n8n-project"
+        },
+        "returnAll": true,
+        "getRepositoryIssuesFilters": {}
+      },
+      "type": "n8n-nodes-base.github",
+      "typeVersion": 1.1,
+      "position": [
+        -240,
+        -368
+      ],
+      "id": "199effd6-f0d7-4355-afc2-1bdd322be776",
+      "name": "Get issues of a repository",
+      "webhookId": "a25973fe-1fa8-4ba0-853a-c0cdd65c031d",
+      "credentials": {
+        "githubApi": {
+          "id": "LnN65Yl0KZlXub5y",
+          "name": "GitHub account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "c2e80b33-c19c-4c75-a237-26881eab3483",
+              "leftValue": "={{ $json.state }}",
+              "rightValue": "open",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -16,
+        -368
+      ],
+      "id": "5f7912cf-67cd-4375-bd05-4915a2a40027",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.day }}",
+                    "rightValue": 2,
+                    "operator": {
+                      "type": "number",
+                      "operation": "equals"
+                    },
+                    "id": "81e50616-f659-40d6-a067-f1f90a0eeb15"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "reminder"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "6bc4894d-a1da-4008-a4ef-cb20ba4abd3e",
+                    "leftValue": "={{ $json.day }}",
+                    "rightValue": 5,
+                    "operator": {
+                      "type": "number",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "inactive "
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        432,
+        -368
+      ],
+      "id": "f153a1a9-c9ca-4071-bd3a-fec473149bd0",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const updatedAt = new Date($json.updated_at);\nlet day = 0\nconst diffDays = (Date.now() - updatedAt.getTime()) / (1000 * 60 * 60 * 24);\nif (diffDays>2 && diffDays<4) {\n  day = 2\n}else if(diffDays > 4.5) {\n  day = 5\n}\nreturn {\n  ...$json,\n  day\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        208,
+        -368
+      ],
+      "id": "93db82c1-a047-4c0d-b8c7-fa9faf884ac1",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "chatId": "5243399167",
+        "text": "={{ $json.content }}",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1008,
+        -464
+      ],
+      "id": "1784d2ef-c3f4-4c01-8348-75ba6ea3141e",
+      "name": "Send a text message",
+      "webhookId": "6ff2c6b9-15bf-4857-939c-c44624986b1d",
+      "credentials": {
+        "telegramApi": {
+          "id": "cVxfRkwoNRwL8Wdu",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "mistral:latest",
+          "mode": "list",
+          "cachedResultName": "mistral:latest"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=you will write a short reminder message that will help to understand github issue  {{ $json.title }}\n{{ $json.body }}"
+            }
+          ]
+        },
+        "options": {
+          "system": "you will help me to send a message to a developer that we will assaine github issue \noutput format\nissue/feature : you will need to add a page\n\nmake it simple and short under 2-3 line"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.ollama",
+      "typeVersion": 1,
+      "position": [
+        656,
+        -464
+      ],
+      "id": "c99222f6-3dd8-4b2e-a912-89be12158348",
+      "name": "Message a model",
+      "credentials": {
+        "ollamaApi": {
+          "id": "hZbNQS2vgKVAylV9",
+          "name": "Ollama account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "edit",
+        "owner": {
+          "__rl": true,
+          "value": "https://github.com/Amit-Pancholi",
+          "mode": "url"
+        },
+        "repository": {
+          "__rl": true,
+          "value": "n8n-project",
+          "mode": "list",
+          "cachedResultName": "n8n-project",
+          "cachedResultUrl": "https://github.com/Amit-Pancholi/n8n-project"
+        },
+        "issueNumber": "={{ $('Switch').item.json.number }}",
+        "editFields": {
+          "state": "closed"
+        }
+      },
+      "type": "n8n-nodes-base.github",
+      "typeVersion": 1.1,
+      "position": [
+        1008,
+        -272
+      ],
+      "id": "c8333a0c-f866-42e4-b08b-3127aa83960c",
+      "name": "Edit an issue",
+      "webhookId": "e89ffd1e-3ae3-4f5a-8ff6-2fad4601475f",
+      "credentials": {
+        "githubApi": {
+          "id": "LnN65Yl0KZlXub5y",
+          "name": "GitHub account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "createComment",
+        "owner": {
+          "__rl": true,
+          "value": "https://github.com/Amit-Pancholi",
+          "mode": "url"
+        },
+        "repository": {
+          "__rl": true,
+          "value": "n8n-project",
+          "mode": "list",
+          "cachedResultName": "n8n-project",
+          "cachedResultUrl": "https://github.com/Amit-Pancholi/n8n-project"
+        },
+        "issueNumber": "={{ $json.number }}",
+        "body": "we will close this issue due to long time inactive ,we will reopen it when need"
+      },
+      "type": "n8n-nodes-base.github",
+      "typeVersion": 1.1,
+      "position": [
+        720,
+        -272
+      ],
+      "id": "04c2a8bc-7372-4569-af3b-2bf9b4eede7e",
+      "name": "Create a comment on an issue",
+      "webhookId": "7117a557-e065-4bd0-a607-dcd2aa367596",
+      "credentials": {
+        "githubApi": {
+          "id": "LnN65Yl0KZlXub5y",
+          "name": "GitHub account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get issues of a repository",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get issues of a repository": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Message a model",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Create a comment on an issue",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model": {
+      "main": [
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create a comment on an issue": {
+      "main": [
+        [
+          {
+            "node": "Edit an issue",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "927f8604-9388-4aca-adcc-73b5ee6555eb",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "85a535a9c32b7114a9ecf4cfa706985f8d0b603d6bd49873023ade529369b818"
+  },
+  "id": "fhGaSkKng1Ifs8TC",
+  "tags": [
+    {
+      "updatedAt": "2026-03-26T06:55:19.775Z",
+      "createdAt": "2026-03-26T06:55:19.775Z",
+      "id": "J9N6zhqTv8jyrLQ7",
+      "name": "Github"
+    },
+    {
+      "updatedAt": "2026-03-24T07:16:24.870Z",
+      "createdAt": "2026-03-24T07:16:24.870Z",
+      "id": "y856iMV4K2hCr2pl",
+      "name": "project"
+    }
+  ]
+}
