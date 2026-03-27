@@ -1,0 +1,264 @@
+{
+  "name": "file proccessing",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "csv-data",
+        "responseMode": "responseNode",
+        "options": {
+          "binaryPropertyName": "data"
+        }
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -432,
+        -304
+      ],
+      "id": "f9b9ef8a-fdf1-4a16-a2de-fa9d33756724",
+      "name": "Webhook",
+      "webhookId": "18c8394b-ecf0-492a-8c92-e4ece4e7c012",
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "binaryPropertyName": "=data0",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1.1,
+      "position": [
+        -208,
+        -304
+      ],
+      "id": "1fa05b6e-c6d1-45bf-b72c-147b73ce0c69",
+      "name": "Extract from File"
+    },
+    {
+      "parameters": {
+        "jsCode": "let age_median = 0\nlet fare_median = 0\nlet items = $input.all()\nfor (const e of items) {\n  age_median += e.json.age\n  fare_median += e.json.fare\n}\nreturn {\n  items,\n  age_median : parseInt(age_median/items.length),\n  fare_median: fare_median/items.length\n}"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        240,
+        -304
+      ],
+      "id": "a85d7e55-08c3-48b6-93fe-567f580b701f",
+      "name": "getting median of age and fare"
+    },
+    {
+      "parameters": {
+        "jsCode": "let items = $input.first().json.items\nlet age_median = $input.first().json.age_median\nlet fare_median = $input.first().json.fare_median\nfor (const e of items) {\n  if(e.json.age == null) e.json.age = age_median\n  if(e.json.fare == null) e.json.fare = fare_median\n}\n\nreturn items"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        464,
+        -304
+      ],
+      "id": "530d674c-4f61-4e6a-b3fd-229cb3c8027f",
+      "name": "handling missing value"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const toInt = (v) => (v !== null && v !== undefined && v !== \"\") ? parseInt(v) : 0;\nconst toFloat = (v) => (v !== null && v !== undefined && v !== \"\") ? parseFloat(v) : 0;\nlet age_group =\n  $json.age < 12 ? 0 :\n  $json.age < 18 ? 1 :\n  $json.age < 40 ? 2 : 3;\nreturn {\n  survived: toInt($json.survived),\n  pclass: toInt($json.pclass),\n  sex: toInt($json.sex),\n  age: toInt($json.age),\n  age_group : age_group,\n  fare: toFloat($json.fare)/100,\n\n  family_size: toInt($json.family_size),\n  is_alone: toInt($json.is_alone),\n  embarked: toInt($json.embarked),\n  title: toInt($json.title)\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        912,
+        -304
+      ],
+      "id": "b76ed576-dd1b-4e46-8fab-2cb3eee6c401",
+      "name": "Normalize"
+    },
+    {
+      "parameters": {
+        "options": {
+          "fileName": "proccessed-file.csv"
+        }
+      },
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        1136,
+        -304
+      ],
+      "id": "eb6e3140-d7a2-4665-a963-0cc05ca8d806",
+      "name": "Convert to File"
+    },
+    {
+      "parameters": {
+        "respondWith": "binary",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "text/csv"
+              },
+              {
+                "name": "Content-Disposition",
+                "value": "attachment; filename=\"processed-file.csv\""
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1360,
+        -304
+      ],
+      "id": "8c9a5f69-ad00-40ee-969a-3f4070c419d6",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "let rawname = $json.Name || \"\";\n\n// Split safely\nlet [last_name, rest] = rawname.split(\",\").map(s => s?.trim());\n\n// Split remaining parts\nlet parts = rest ? rest.split(/\\s+/) : [];\n\n// Extract title safely\nlet title = parts[0]?.replace(\".\", \"\") || null;\n\n// Safe number parsing\nconst toInt = (val) => val ? parseInt(val) : null;\nconst toFloat = (val) => val ? parseFloat(val) : null;\n\n// Build full name safely\n\nreturn {\n  survived: toInt($json.Survived),\n  pclass: toInt($json.Pclass),\n\n  title,\n\n  sex: $json.Sex === \"male\" ? 1 : $json.Sex === \"female\" ? 0 : null,\n\n  age: toInt($json.Age),\n  sibSp: toInt($json.SibSp),\n  parch: toInt($json.Parch),\n\n  fare: toFloat($json.Fare),\n\n  embarked: $json.Embarked || null\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        16,
+        -304
+      ],
+      "id": "fa6a7cc8-3f39-4928-a1d3-aaa5441bab6f",
+      "name": "cleaning and drop useless cloumn"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// Safe parsing helpers\nconst toInt = (v) => (v !== null && v !== undefined && v !== \"\") ? parseInt(v) : 0;\nconst toFloat = (v) => (v !== null && v !== undefined && v !== \"\") ? parseFloat(v) : 0;\n\n// Calculate features\nlet sibSp = toInt($json.sibSp);\nlet parch = toInt($json.parch);\n\nlet family_size = sibSp + parch + 1;\nlet is_alone = family_size === 1 ? 1 : 0;\n\n// Encode embarked\nlet embarked_code =\n  $json.embarked === \"S\" ? 0 :\n  $json.embarked === \"C\" ? 1 :\n  $json.embarked === \"Q\" ? 2 : null;\n\n// Optional: title encoding (VERY useful)\nlet title_map = {\n  Mr: 0,\n  Miss: 1,\n  Mrs: 2,\n  Master: 3\n};\n\nlet title_code = title_map[$json.title] ?? 4; // others\n\nreturn {\n  survived: toInt($json.survived),\n  pclass: toInt($json.pclass),\n  sex: toInt($json.sex),\n  age: toInt($json.age),\n  fare: toFloat($json.fare),\n\n  family_size,\n  is_alone,\n  embarked: embarked_code,\n  title: title_code\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        688,
+        -304
+      ],
+      "id": "860daf81-794a-43e8-9aad-4c4de23a7b7e",
+      "name": "Feature Engineering "
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Extract from File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from File": {
+      "main": [
+        [
+          {
+            "node": "cleaning and drop useless cloumn",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "getting median of age and fare": {
+      "main": [
+        [
+          {
+            "node": "handling missing value",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "handling missing value": {
+      "main": [
+        [
+          {
+            "node": "Feature Engineering ",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize": {
+      "main": [
+        [
+          {
+            "node": "Convert to File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert to File": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "cleaning and drop useless cloumn": {
+      "main": [
+        [
+          {
+            "node": "getting median of age and fare",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Feature Engineering ": {
+      "main": [
+        [
+          {
+            "node": "Normalize",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "e4ef664b-2928-490c-acd1-032d52c75ea0",
+  "meta": {
+    "instanceId": "85a535a9c32b7114a9ecf4cfa706985f8d0b603d6bd49873023ade529369b818"
+  },
+  "id": "UmaLcS2UeY6K7uKD",
+  "tags": [
+    {
+      "updatedAt": "2026-03-26T18:14:17.418Z",
+      "createdAt": "2026-03-26T18:14:17.418Z",
+      "id": "PlQeoW27BxLdTllZ",
+      "name": "file"
+    },
+    {
+      "updatedAt": "2026-03-24T07:16:24.870Z",
+      "createdAt": "2026-03-24T07:16:24.870Z",
+      "id": "y856iMV4K2hCr2pl",
+      "name": "project"
+    }
+  ]
+}
